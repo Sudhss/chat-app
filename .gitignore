@@ -1,0 +1,49 @@
+# Build outputs
+build/
+*.exe
+*.o
+*.d
+*.a
+*.lib
+*.dll
+*.so
+*.dylib
+
+# IDE specific files
+.vscode/
+.idea/
+*.sln
+*.vcxproj*
+*.user
+*.sdf
+*.opensdf
+*.suo
+*.userprefs
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Logs
+*.log
+
+# Local development files
+.env
+.env.local
+
+# Executables
+flux_server
+*.exe
+
+# Dependencies
+boost/
