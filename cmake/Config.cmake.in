@@ -1,0 +1,73 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+# Find dependencies
+find_dependency(Boost 1.70.0 REQUIRED COMPONENTS system thread filesystem program_options random)
+
+if(NOT TARGET Flux::flux_server)
+    include("${CMAKE_CURRENT_LIST_DIR}/FluxTargets.cmake")
+    
+    # Add alias for consistency
+    add_library(Flux::flux_server ALIAS flux_server)
+    
+    # Provide legacy variables for backward compatibility
+    set(Flux_LIBRARIES Flux::flux_server)
+    set(Flux_INCLUDE_DIRS "${PACKAGE_PREFIX_DIR}/include")
+    
+    # Create an imported target for the documentation
+    add_library(Flux::documentation INTERFACE IMPORTED)
+    set_target_properties(Flux::documentation PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES "${PACKAGE_PREFIX_DIR}/doc"
+    )
+    
+    # Export the package version
+    set(Flux_VERSION @PROJECT_VERSION@)
+    
+    # Add usage requirements
+    target_include_directories(Flux::flux_server
+        INTERFACE
+            $<INSTALL_INTERFACE:include>
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    )
+    
+    # Add compile features
+    target_compile_features(Flux::flux_server
+        INTERFACE
+            cxx_std_17
+    )
+    
+    # Add compile options
+    target_compile_options(Flux::flux_server
+        INTERFACE
+            $<$<CONFIG:Debug>:-g -O0 -Wall -Wextra -Wpedantic -Werror>
+            $<$<CONFIG:Release>:-O3 -DNDEBUG>
+    )
+    
+    # Add link libraries
+    target_link_libraries(Flux::flux_server
+        INTERFACE
+            Boost::system
+            Boost::thread
+            Boost::filesystem
+            Boost::program_options
+            Boost::random
+    )
+    
+    # Export the target
+    export(TARGETS flux_server
+        NAMESPACE Flux::
+        FILE "${CMAKE_CURRENT_BINARY_DIR}/FluxTargets.cmake"
+    )
+    
+    # Export the package for find_package
+    export(PACKAGE Flux)
+endif()
+
+# Handle standard args for find_package
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(Flux
+    REQUIRED_VARS Flux_LIBRARIES Flux_INCLUDE_DIRS
+    VERSION_VAR Flux_VERSION
+    HANDLE_COMPONENTS
+)
