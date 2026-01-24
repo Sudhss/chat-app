@@ -1,6 +1,6 @@
 # Flux - Real-time Chat Application
 
-## Notice : Under Progress, does not work rn
+## Notice : Under Progress, does not work right now
 
 ## Overview
 Flux is a high-performance, real-time chat application built with modern C++ and WebSockets. It provides a responsive web interface for real-time messaging with a focus on performance and scalability.
