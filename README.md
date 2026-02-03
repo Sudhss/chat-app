@@ -11,7 +11,7 @@ Flux is a high-performance, real-time chat application built with modern C++ and
 - Clean and responsive UI
 
 ## Prerequisites
-- C++17 compatible compiler (GCC 8+ or MSVC 2019+)
+- C++ 17 compatible compiler (GCC 8+ or MSVC 2019+)
 - Boost 1.70 or higher
 - CMake 3.10 or higher (for building)
 - Python 3.6+ (for running the test server)
