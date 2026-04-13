@@ -1,0 +1,188 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  username       String    @unique
+  displayName    String
+  passwordHash   String?
+  avatarUrl      String?
+  bio            String?
+  isOnline       Boolean   @default(false)
+  lastSeen       DateTime  @default(now())
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  googleId       String?   @unique
+
+  participations ChatParticipant[]
+  sentMessages   Message[]         @relation("SentMessages")
+  notifications  Notification[]
+  refreshTokens  RefreshToken[]
+  mediaUploads   Media[]
+
+  @@index([email])
+  @@index([username])
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Chat {
+  id          String   @id @default(cuid())
+  type        ChatType @default(DIRECT)
+  name        String?
+  description String?
+  avatarUrl   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  lastMessageAt DateTime?
+
+  participants ChatParticipant[]
+  messages     Message[]
+
+  @@index([lastMessageAt])
+}
+
+enum ChatType {
+  DIRECT
+  GROUP
+}
+
+model ChatParticipant {
+  id           String    @id @default(cuid())
+  chatId       String
+  userId       String
+  role         ParticipantRole @default(MEMBER)
+  joinedAt     DateTime  @default(now())
+  lastReadAt   DateTime?
+  unreadCount  Int       @default(0)
+  isArchived   Boolean   @default(false)
+  isMuted      Boolean   @default(false)
+
+  chat Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([chatId, userId])
+  @@index([userId])
+  @@index([chatId])
+}
+
+enum ParticipantRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+model Message {
+  id          String        @id @default(cuid())
+  chatId      String
+  senderId    String
+  content     String?
+  type        MessageType   @default(TEXT)
+  status      MessageStatus @default(SENT)
+  replyToId   String?
+  metadata    Json?
+  deletedAt   DateTime?
+  editedAt    DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  chat     Chat      @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  sender   User      @relation("SentMessages", fields: [senderId], references: [id])
+  replyTo  Message?  @relation("Replies", fields: [replyToId], references: [id])
+  replies  Message[] @relation("Replies")
+  media    Media[]
+  receipts MessageReceipt[]
+
+  @@index([chatId, createdAt])
+  @@index([senderId])
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  FILE
+  AUDIO
+  VIDEO
+  SYSTEM
+}
+
+enum MessageStatus {
+  SENDING
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
+
+model MessageReceipt {
+  id          String   @id @default(cuid())
+  messageId   String
+  userId      String
+  deliveredAt DateTime?
+  readAt      DateTime?
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@index([messageId])
+}
+
+model Media {
+  id           String    @id @default(cuid())
+  uploaderId   String
+  messageId    String?
+  filename     String
+  originalName String
+  mimeType     String
+  size         Int
+  url          String
+  thumbnailUrl String?
+  width        Int?
+  height       Int?
+  duration     Int?
+  createdAt    DateTime  @default(now())
+
+  uploader User     @relation(fields: [uploaderId], references: [id])
+  message  Message? @relation(fields: [messageId], references: [id])
+
+  @@index([uploaderId])
+  @@index([messageId])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  body      String
+  data      Json?
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+}
+
+enum NotificationType {
+  NEW_MESSAGE
+  GROUP_INVITE
+  MENTION
+  SYSTEM
+}
