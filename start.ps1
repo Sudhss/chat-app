@@ -64,11 +64,15 @@ if (!(Test-Cmd "npm")) {
 if (!(Test-Cmd "docker")) {
     $bad += "Docker Desktop  ->  https://docker.com/products/docker-desktop"
 } else {
-    $di = docker info 2>&1
-    if ($LASTEXITCODE -ne 0) {
+    try {
+        docker ps > $null 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            $bad += "Docker is installed but not running - please start Docker Desktop"
+        } else {
+            Write-Ok "Docker is running"
+        }
+    } catch {
         $bad += "Docker is installed but not running - please start Docker Desktop"
-    } else {
-        Write-Ok "Docker is running"
     }
 }
 
@@ -131,7 +135,10 @@ if (!(Test-Path $fenv)) {
 Write-Step "Starting infrastructure (Postgres, Redis, MinIO)"
 Set-Location $ROOT
 Write-Info "Pulling images - first run may take a few minutes ..."
-docker compose up postgres redis minio minio-setup --detach --quiet-pull 2>&1 | Out-Null
+
+$ErrorActionPreference = "Continue"
+docker compose up postgres redis minio minio-setup --detach --quiet-pull *> $null
+$ErrorActionPreference = "Stop"
 Write-Ok "Containers started"
 Wait-Port -port 5432 -name "PostgreSQL" -timeout 90
 Wait-Port -port 6379 -name "Redis"      -timeout 30
@@ -149,13 +156,13 @@ Write-Step "Setting up database"
 Set-Location "$ROOT\backend"
 
 Write-Info "prisma generate ..."
-npx prisma generate 2>&1 | Out-Null
+npx prisma generate
 
 $line = (Get-Content ".env" | Where-Object { $_ -match "^DATABASE_URL=" } | Select-Object -First 1)
 if ($line) { $env:DATABASE_URL = $line -replace "^DATABASE_URL=","" }
 
 Write-Info "prisma db push ..."
-npx prisma db push --accept-data-loss 2>&1 | Out-Null
+npx prisma db push --accept-data-loss
 Write-Ok "Database schema ready"
 
 # --- 7. Frontend deps ---

@@ -1,6 +1,7 @@
 'use client';
 import { useState, useCallback } from 'react';
 import { Search, X, Check, Users } from 'lucide-react';
+import { DialogTitle } from '@radix-ui/react-dialog';
 import * as Dialog from '@radix-ui/react-dialog';
 import { User, Chat } from '../../types';
 import { cn } from '../../lib/utils';
@@ -9,18 +10,18 @@ import { useChatStore } from '../../store/chat.store';
 import toast from 'react-hot-toast';
 
 interface Props {
-  open:     boolean;
-  onClose:  () => void;
+  open: boolean;
+  onClose: () => void;
   onSelect: (chat: Chat) => void;
 }
 
 export const NewChatModal = ({ open, onClose, onSelect }: Props) => {
-  const [query, setQuery]       = useState('');
-  const [results, setResults]   = useState<User[]>([]);
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<User[]>([]);
   const [selected, setSelected] = useState<User[]>([]);
   const [groupName, setGroupName] = useState('');
-  const [loading, setLoading]   = useState(false);
-  const { upsertChat }          = useChatStore();
+  const [loading, setLoading] = useState(false);
+  const { upsertChat } = useChatStore();
 
   const search = useCallback(async (q: string) => {
     setQuery(q);
@@ -55,7 +56,7 @@ export const NewChatModal = ({ open, onClose, onSelect }: Props) => {
       } else {
         if (!groupName.trim()) { toast.error('Enter a group name'); setLoading(false); return; }
         const { data } = await api.post('/chats/group', {
-          name:      groupName,
+          name: groupName,
           memberIds: selected.map(u => u.id),
         });
         chat = data.data;
@@ -78,7 +79,9 @@ export const NewChatModal = ({ open, onClose, onSelect }: Props) => {
         <Dialog.Content className="fixed inset-x-4 top-1/2 -translate-y-1/2 md:inset-auto md:left-1/2 md:-translate-x-1/2 md:w-full md:max-w-md bg-flux-surface border border-flux-border rounded-2xl shadow-2xl z-50 animate-slide-up">
           {/* Header */}
           <div className="flex items-center justify-between px-5 py-4 border-b border-flux-border">
-            <h2 className="font-semibold text-flux-text">New conversation</h2>
+            <DialogTitle className="font-semibold text-flux-text">
+              New conversation
+            </DialogTitle>
             <button onClick={onClose} className="p-1 rounded-lg text-flux-subtext hover:text-flux-text">
               <X size={18} />
             </button>
